@@ -1,4 +1,4 @@
-import { GraduationCap } from 'lucide-react';
+import universityLogo from '@/assets/logo.png';
 
 const Header = () => {
   return (
@@ -6,15 +6,17 @@ const Header = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center shadow-card">
-              <GraduationCap className="w-8 h-8 text-primary-foreground" />
-            </div>
+            <img 
+              src={universityLogo} 
+              alt="جامعة الغردقة" 
+              className="w-16 h-16 object-contain"
+            />
             <div>
               <h1 className="text-2xl font-bold text-sidebar-foreground">
-                نظام إدارة الإسكان الطلابي
+                جامعة الغردقة - نظام إدارة الإسكان الطلابي
               </h1>
               <p className="text-sidebar-foreground/70 text-sm mt-1">
-                إدارة طلبات السكن الجامعي
+                Hurghada University - Student Housing Management System
               </p>
             </div>
           </div>

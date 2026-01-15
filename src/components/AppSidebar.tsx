@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
-import { User, Users, Building2, Calendar, LogOut } from "lucide-react";
+import { User, Users, Building2, Calendar, LogOut, ShieldCheck } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useAuth } from "@/hooks/useAuth";
 import universityLogo from "@/assets/logo.png";
 
 import {
@@ -26,8 +27,13 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { signOut, isSuperAdmin, user } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <Sidebar
@@ -75,6 +81,27 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Admin Management - Only for Super Admin */}
+              {isSuperAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/admin-management")}
+                    tooltip="إدارة المسؤولين"
+                  >
+                    <NavLink
+                      to="/admin-management"
+                      end
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"
+                      activeClassName="bg-primary text-primary-foreground"
+                    >
+                      <ShieldCheck className="h-5 w-5" />
+                      {!collapsed && <span>إدارة المسؤولين</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -89,7 +116,10 @@ export function AppSidebar() {
               tooltip="تسجيل الخروج"
               className="text-destructive hover:bg-destructive/10"
             >
-              <button className="flex items-center gap-3 w-full px-4 py-3">
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-3 w-full px-4 py-3"
+              >
                 <LogOut className="h-5 w-5" />
                 {!collapsed && <span>تسجيل الخروج</span>}
               </button>

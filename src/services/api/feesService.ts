@@ -1,8 +1,8 @@
 import { apiClient, ApiResponse } from './client';
-import { FeesDto } from '@/types/api';
+import { FeesDto, FeePaymentDto, BaseHousingFeeDto } from '@/types/api';
 
 class FeesService {
-  // General Fees
+  // General Fees CRUD
   async getAll(): Promise<ApiResponse<FeesDto[]>> {
     return apiClient.get<FeesDto[]>('/api/Fees');
   }
@@ -24,8 +24,8 @@ class FeesService {
   }
 
   // Admin Housing Fees
-  async setGlobalHousingFee(feeData: unknown): Promise<ApiResponse<unknown>> {
-    return apiClient.post('/api/admin/housing-fees/set-global', feeData);
+  async setGlobalHousingFee(amount: number, notes?: string): Promise<ApiResponse<unknown>> {
+    return apiClient.post(`/api/admin/housing-fees/set-global?amount=${amount}${notes ? `&notes=${encodeURIComponent(notes)}` : ''}`);
   }
 
   async getHousingFees(): Promise<ApiResponse<FeesDto[]>> {
@@ -36,8 +36,8 @@ class FeesService {
     return apiClient.get<FeesDto[]>(`/api/admin/housing-fees/student/${studentId}`);
   }
 
-  async updateHousingFee(id: number, fee: Partial<FeesDto>): Promise<ApiResponse<FeesDto>> {
-    return apiClient.put<FeesDto>(`/api/admin/housing-fees/${id}`, fee);
+  async updateHousingFee(id: number, amount: number): Promise<ApiResponse<FeesDto>> {
+    return apiClient.put<FeesDto>(`/api/admin/housing-fees/${id}`, amount);
   }
 
   async deleteHousingFee(id: number): Promise<ApiResponse<void>> {
@@ -49,8 +49,8 @@ class FeesService {
   }
 
   // Admin Fee Payments
-  async getPendingPayments(): Promise<ApiResponse<unknown[]>> {
-    return apiClient.get<unknown[]>('/api/admin/payments/pending');
+  async getPendingPayments(): Promise<ApiResponse<FeePaymentDto[]>> {
+    return apiClient.get<FeePaymentDto[]>('/api/admin/payments/pending');
   }
 
   async approvePayment(feePaymentId: number): Promise<ApiResponse<unknown>> {
@@ -61,17 +61,17 @@ class FeesService {
     return apiClient.post(`/api/admin/payments/reject/${feePaymentId}`);
   }
 
-  // Base Housing Fees
-  async setBaseGlobalFee(feeData: unknown): Promise<ApiResponse<unknown>> {
-    return apiClient.post('/api/admin/base-housing-fees/set-global', feeData);
+  // Base Housing Fees (Global settings)
+  async setBaseGlobalFee(amount: number, notes?: string): Promise<ApiResponse<unknown>> {
+    return apiClient.post(`/api/admin/base-housing-fees/set-global?amount=${amount}${notes ? `&notes=${encodeURIComponent(notes)}` : ''}`);
   }
 
-  async updateBaseGlobalFee(feeData: unknown): Promise<ApiResponse<unknown>> {
-    return apiClient.put('/api/admin/base-housing-fees/update-global', feeData);
+  async updateBaseGlobalFee(newAmount: number): Promise<ApiResponse<unknown>> {
+    return apiClient.put(`/api/admin/base-housing-fees/update-global?newAmount=${newAmount}`);
   }
 
-  async getBaseHousingFees(): Promise<ApiResponse<unknown[]>> {
-    return apiClient.get<unknown[]>('/api/admin/base-housing-fees');
+  async getBaseHousingFees(): Promise<ApiResponse<BaseHousingFeeDto[]>> {
+    return apiClient.get<BaseHousingFeeDto[]>('/api/admin/base-housing-fees');
   }
 
   async deleteBaseFee(id: number): Promise<ApiResponse<void>> {
@@ -79,8 +79,13 @@ class FeesService {
   }
 
   // Student Payment
-  async payFee(feeId: number, paymentData: unknown): Promise<ApiResponse<unknown>> {
+  async payFee(feeId: number, paymentData: FeePaymentDto): Promise<ApiResponse<unknown>> {
     return apiClient.post(`/api/student/payments/pay/${feeId}`, paymentData);
+  }
+
+  // Student Profile Fees
+  async getMyFees(): Promise<ApiResponse<FeesDto[]>> {
+    return apiClient.get<FeesDto[]>('/api/student/profile/fees');
   }
 }
 

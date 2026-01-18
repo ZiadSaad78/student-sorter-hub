@@ -12,7 +12,7 @@ export function BuildingCard({ building, onViewDetails }: BuildingCardProps) {
   const totalOccupied = building.rooms.reduce((sum, r) => sum + r.currentOccupancy, 0);
   const occupancyRate = totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
 
-  const isMale = building.gender?.toLowerCase() === "male" || building.gender === "بنين";
+  const isMale = building.type?.toLowerCase() === "male" || building.type === "بنين";
 
   return (
     <div className="bg-card rounded-2xl overflow-hidden shadow-lg hover:-translate-y-1 transition-transform duration-300 animate-fade-in">
@@ -20,7 +20,7 @@ export function BuildingCard({ building, onViewDetails }: BuildingCardProps) {
       <div className="gradient-header p-5 text-primary-foreground flex justify-between items-center">
         <div className="flex items-center gap-3">
           <Building2 className="w-6 h-6" />
-          <h3 className="text-lg font-bold">{building.buildingName}</h3>
+          <h3 className="text-lg font-bold">{building.name}</h3>
         </div>
         <CircleDot className={`w-5 h-5 ${isMale ? "text-blue-300" : "text-pink-300"}`} />
       </div>

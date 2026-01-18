@@ -1,5 +1,12 @@
 import { apiClient, ApiResponse } from './client';
-import { ApplicationDetailsDto, ApplicationStatusDto, ApplicationWindowDto } from '@/types/api';
+import { 
+  ApplicationDetailsDto, 
+  ApplicationStatusDto, 
+  ApplicationWindowDto,
+  FullFormDto,
+  FeesDto,
+  NotificationDto
+} from '@/types/api';
 
 class ApplicationService {
   // Admin Applications
@@ -19,17 +26,21 @@ class ApplicationService {
     return apiClient.post(`/api/admin/applications/${applicationId}/reject`);
   }
 
-  async setApplicationFees(applicationId: number, feeData: unknown): Promise<ApiResponse<unknown>> {
+  async setApplicationFees(applicationId: number, feeData: FeesDto): Promise<ApiResponse<unknown>> {
     return apiClient.post(`/api/admin/applications/${applicationId}/fees`, feeData);
   }
 
-  async sendApplicationNotification(applicationId: number, notification: unknown): Promise<ApiResponse<unknown>> {
+  async sendApplicationNotification(applicationId: number, notification: NotificationDto): Promise<ApiResponse<unknown>> {
     return apiClient.post(`/api/admin/applications/${applicationId}/notifications`, notification);
   }
 
   // Application Statuses
   async getStatuses(): Promise<ApiResponse<ApplicationStatusDto[]>> {
     return apiClient.get<ApplicationStatusDto[]>('/api/admin/application-statuses');
+  }
+
+  async getStatusById(id: number): Promise<ApiResponse<ApplicationStatusDto>> {
+    return apiClient.get<ApplicationStatusDto>(`/api/admin/application-statuses/${id}`);
   }
 
   async createStatus(status: Partial<ApplicationStatusDto>): Promise<ApiResponse<ApplicationStatusDto>> {
@@ -49,6 +60,10 @@ class ApplicationService {
     return apiClient.get<ApplicationWindowDto[]>('/api/admin/application-windows');
   }
 
+  async getWindowById(id: number): Promise<ApiResponse<ApplicationWindowDto>> {
+    return apiClient.get<ApplicationWindowDto>(`/api/admin/application-windows/${id}`);
+  }
+
   async getActiveWindow(): Promise<ApiResponse<ApplicationWindowDto>> {
     return apiClient.get<ApplicationWindowDto>('/api/admin/application-windows/active');
   }
@@ -66,8 +81,8 @@ class ApplicationService {
   }
 
   // Student Applications
-  async submitApplication(): Promise<ApiResponse<unknown>> {
-    return apiClient.post('/api/student/applications/submit');
+  async submitApplication(formData: FullFormDto): Promise<ApiResponse<unknown>> {
+    return apiClient.post('/api/student/applications/submit', formData);
   }
 
   async getMyApplications(): Promise<ApiResponse<ApplicationDetailsDto[]>> {

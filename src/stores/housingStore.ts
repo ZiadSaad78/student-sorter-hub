@@ -24,7 +24,7 @@ interface HousingState {
   fetchBuildings: () => Promise<void>;
   fetchRooms: () => Promise<void>;
   fetchAcceptedStudents: () => Promise<void>;
-  addBuilding: (building: { buildingName: string; gender: string; numberOfFloors: number }) => Promise<void>;
+  addBuilding: (building: { name: string; type: string; numberOfFloors: number }) => Promise<void>;
   addRoom: (buildingId: number, room: { roomNumber: string; capacity: number; floor?: number }) => Promise<void>;
   setSelectedRoom: (room: RoomWithStudents | null) => void;
   setSelectedBuilding: (building: BuildingWithRooms | null) => void;
@@ -130,8 +130,8 @@ export const useHousingStore = create<HousingState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await buildingService.create({
-        buildingName: building.buildingName,
-        gender: building.gender,
+        name: building.name,
+        type: building.type,
         numberOfFloors: building.numberOfFloors,
         status: 'active',
       });
@@ -176,10 +176,7 @@ export const useHousingStore = create<HousingState>((set, get) => ({
   assignStudentToRoom: async (studentId, roomId) => {
     set({ loading: true, error: null });
     try {
-      const response = await roomService.assignStudent({
-        studentId,
-        roomId,
-      });
+      const response = await roomService.assignStudent(studentId, roomId);
 
       if (response.error) {
         set({ error: response.error, loading: false });

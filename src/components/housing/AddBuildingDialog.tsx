@@ -21,7 +21,7 @@ interface AddBuildingDialogProps {
 export function AddBuildingDialog({ open, onOpenChange }: AddBuildingDialogProps) {
   const [name, setName] = useState("");
   const [floors, setFloors] = useState("3");
-  const [gender, setGender] = useState<"male" | "female">("male");
+  const [type, setType] = useState<"male" | "female">("male");
 
   const addBuilding = useHousingStore((state) => state.addBuilding);
   const loading = useHousingStore((state) => state.loading);
@@ -31,14 +31,14 @@ export function AddBuildingDialog({ open, onOpenChange }: AddBuildingDialogProps
     if (!name.trim()) return;
 
     await addBuilding({
-      buildingName: name.trim(),
+      name: name.trim(),
       numberOfFloors: parseInt(floors) || 3,
-      gender,
+      type,
     });
 
     setName("");
     setFloors("3");
-    setGender("male");
+    setType("male");
     onOpenChange(false);
   };
 
@@ -80,8 +80,8 @@ export function AddBuildingDialog({ open, onOpenChange }: AddBuildingDialogProps
           <div className="space-y-3">
             <Label>نوع السكن</Label>
             <RadioGroup
-              value={gender}
-              onValueChange={(v) => setGender(v as "male" | "female")}
+              value={type}
+              onValueChange={(v) => setType(v as "male" | "female")}
               className="flex gap-4"
             >
               <div className="flex items-center gap-2">

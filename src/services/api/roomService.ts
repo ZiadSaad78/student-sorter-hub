@@ -1,5 +1,5 @@
 import { apiClient, ApiResponse } from './client';
-import { RoomDto, RoomCreateDto, RoomAssignmentDto } from '@/types/api';
+import { RoomDto, RoomCreateDto } from '@/types/api';
 
 class RoomService {
   async getAll(): Promise<ApiResponse<RoomDto[]>> {
@@ -14,7 +14,7 @@ class RoomService {
     return apiClient.post<RoomDto>('/api/Room', room);
   }
 
-  async update(id: number, room: RoomCreateDto): Promise<ApiResponse<RoomDto>> {
+  async update(id: number, room: Partial<RoomDto>): Promise<ApiResponse<RoomDto>> {
     return apiClient.put<RoomDto>(`/api/Room/${id}`, room);
   }
 
@@ -22,12 +22,13 @@ class RoomService {
     return apiClient.delete<void>(`/api/Room/${id}`);
   }
 
-  async assignStudent(assignment: RoomAssignmentDto): Promise<ApiResponse<unknown>> {
-    return apiClient.post('/api/RoomAssignment/assign', assignment);
+  // Room assignment - uses query params not body
+  async assignStudent(studentId: number, roomId: number): Promise<ApiResponse<unknown>> {
+    return apiClient.post(`/api/RoomAssignment/assign?studentId=${studentId}&roomId=${roomId}`);
   }
 
-  async removeAssignment(id: number): Promise<ApiResponse<void>> {
-    return apiClient.delete<void>(`/api/RoomAssignment/${id}`);
+  async removeAssignment(assignmentId: number): Promise<ApiResponse<void>> {
+    return apiClient.delete<void>(`/api/RoomAssignment/${assignmentId}`);
   }
 }
 

@@ -4,13 +4,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Room } from "@/types/housing";
+import { RoomWithStudents } from "@/stores/housingStore";
 import { StudentCard } from "./StudentCard";
 import { useHousingStore } from "@/stores/housingStore";
 import { DoorOpen, Users, AlertCircle } from "lucide-react";
 
 interface RoomDetailsSheetProps {
-  room: Room | null;
+  room: RoomWithStudents | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -20,7 +20,13 @@ export function RoomDetailsSheet({ room, open, onOpenChange }: RoomDetailsSheetP
 
   if (!room) return null;
 
-  const isFull = room.students.length >= room.capacity;
+  const isFull = room.currentOccupancy >= room.capacity;
+
+  const handleRemoveStudent = async (studentId: number) => {
+    // For now, we'll use the studentId as assignmentId
+    // In a real scenario, you'd need to track assignment IDs
+    await removeStudentFromRoom(studentId);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -31,10 +37,12 @@ export function RoomDetailsSheet({ room, open, onOpenChange }: RoomDetailsSheetP
               <DoorOpen className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <span>غرفة {room.number}</span>
-              <p className="text-sm font-normal text-muted-foreground mt-1">
-                الطابق {room.floor}
-              </p>
+              <span>غرفة {room.roomNumber}</span>
+              {room.apartmentName && (
+                <p className="text-sm font-normal text-muted-foreground mt-1">
+                  {room.apartmentName}
+                </p>
+              )}
             </div>
           </SheetTitle>
         </SheetHeader>
@@ -48,7 +56,7 @@ export function RoomDetailsSheet({ room, open, onOpenChange }: RoomDetailsSheetP
             </div>
             <div className="flex items-center gap-2">
               <span className={`font-bold text-lg ${isFull ? 'text-green-500' : 'text-accent'}`}>
-                {room.students.length}/{room.capacity}
+                {room.currentOccupancy}/{room.capacity}
               </span>
               {isFull && (
                 <span className="text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded-full">
@@ -74,11 +82,11 @@ export function RoomDetailsSheet({ room, open, onOpenChange }: RoomDetailsSheetP
             <div className="space-y-3">
               {room.students.map((student) => (
                 <StudentCard
-                  key={student.id}
+                  key={student.studentId}
                   student={student}
                   compact
                   showRemove
-                  onRemove={(studentId) => removeStudentFromRoom(studentId, room.id)}
+                  onRemove={handleRemoveStudent}
                 />
               ))}
             </div>

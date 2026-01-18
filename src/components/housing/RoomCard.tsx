@@ -1,16 +1,16 @@
-import { Room } from "@/types/housing";
+import { RoomWithStudents } from "@/stores/housingStore";
 import { DoorOpen, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RoomCardProps {
-  room: Room;
-  onClick: (room: Room) => void;
+  room: RoomWithStudents;
+  onClick: (room: RoomWithStudents) => void;
   isSelected: boolean;
 }
 
 export function RoomCard({ room, onClick, isSelected }: RoomCardProps) {
-  const isFull = room.students.length >= room.capacity;
-  const isEmpty = room.students.length === 0;
+  const isFull = room.currentOccupancy >= room.capacity;
+  const isEmpty = room.currentOccupancy === 0;
 
   return (
     <button
@@ -33,7 +33,7 @@ export function RoomCard({ room, onClick, isSelected }: RoomCardProps) {
         )}>
           <DoorOpen className="w-5 h-5" />
         </div>
-        <span className="font-bold text-lg text-foreground">غرفة {room.number}</span>
+        <span className="font-bold text-lg text-foreground">غرفة {room.roomNumber}</span>
       </div>
 
       <div className="flex items-center justify-between text-sm">
@@ -43,19 +43,21 @@ export function RoomCard({ room, onClick, isSelected }: RoomCardProps) {
               key={i}
               className={cn(
                 "w-4 h-4",
-                i < room.students.length ? "text-accent fill-accent" : "text-muted-foreground/30"
+                i < room.currentOccupancy ? "text-accent fill-accent" : "text-muted-foreground/30"
               )}
             />
           ))}
         </div>
         <span className="text-muted-foreground">
-          {room.students.length}/{room.capacity}
+          {room.currentOccupancy}/{room.capacity}
         </span>
       </div>
 
-      <div className="mt-2 text-xs text-muted-foreground">
-        الطابق {room.floor}
-      </div>
+      {room.apartmentName && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          {room.apartmentName}
+        </div>
+      )}
     </button>
   );
 }

@@ -14,7 +14,7 @@ class BuildingService {
     return apiClient.post<BuildingDto>('/api/Building', building);
   }
 
-  async update(id: number, building: BuildingCreateDto): Promise<ApiResponse<BuildingDto>> {
+  async update(id: number, building: Partial<BuildingDto>): Promise<ApiResponse<BuildingDto>> {
     return apiClient.put<BuildingDto>(`/api/Building/${id}`, building);
   }
 

@@ -23,7 +23,7 @@ export function BuildingDetailsView({ building, onBack }: BuildingDetailsViewPro
   const freshBuilding = buildings.find((b) => b.buildingId === building.buildingId) || building;
 
   // Filter students by gender matching building
-  const isMaleBuilding = freshBuilding.gender?.toLowerCase() === "male" || freshBuilding.gender === "بنين";
+  const isMaleBuilding = freshBuilding.type?.toLowerCase() === "male" || freshBuilding.type === "بنين";
   const eligibleStudents = acceptedStudents.filter((s) => {
     const isMaleStudent = s.gender?.toLowerCase() === "male" || s.gender === "ذكر";
     return isMaleBuilding === isMaleStudent;
@@ -56,7 +56,7 @@ export function BuildingDetailsView({ building, onBack }: BuildingDetailsViewPro
             <ArrowRight className="w-5 h-5" />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold text-foreground">{freshBuilding.buildingName}</h2>
+            <h2 className="text-2xl font-bold text-foreground">{freshBuilding.name}</h2>
             <p className="text-muted-foreground">
               {freshBuilding.rooms.length} غرفة • {freshBuilding.numberOfFloors} طوابق
             </p>

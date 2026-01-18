@@ -1,4 +1,4 @@
-// API DTOs matching the Swagger schema
+// API DTOs matching the Swagger schema exactly
 
 // Enums
 export enum StudentTypeEnum {
@@ -63,11 +63,8 @@ export interface FamilyContactDto {
 // Education DTOs
 export interface AcademicEducationDto {
   studentId: number;
-  universityName?: string | null;
-  collegeName?: string | null;
-  departmentName?: string | null;
-  gpa?: number;
-  academicYear?: string | null;
+  currentGPA: number;
+  lastYearGrade: string | null;
 }
 
 export interface SecondaryEducationDto {
@@ -81,15 +78,15 @@ export interface SecondaryEducationDto {
 // Building DTOs
 export interface BuildingDto {
   buildingId: number;
-  buildingName: string | null;
-  gender: string | null;
+  name: string | null;
+  type: string | null;
   numberOfFloors: number;
   status: string | null;
 }
 
 export interface BuildingCreateDto {
-  buildingName: string;
-  gender: string;
+  name: string;
+  type: string;
   numberOfFloors: number;
   status?: string;
 }
@@ -122,16 +119,20 @@ export interface RoomAssignmentDto {
 // Application DTOs
 export interface ApplicationStatusDto {
   statusId: number;
-  statusName: string | null;
+  label: string | null;
+  colorCode: string | null;
   description: string | null;
 }
 
 export interface ApplicationWindowDto {
   windowId: number;
-  windowName: string | null;
+  title: string | null;
+  description: string | null;
+  createdAt: string;
   startDate: string;
   endDate: string;
-  isActive: boolean;
+  status: string | null;
+  userId: number;
 }
 
 export interface ApplicationDetailsDto {
@@ -201,7 +202,7 @@ export interface ComplaintDto {
   resolvedAt?: string | null;
 }
 
-// Full Form DTO (for student registration)
+// Full Form DTO (for student application submission)
 export interface FullFormDto {
   studentType: StudentTypeEnum;
   studentInfo: StudentDto;
@@ -222,4 +223,30 @@ export interface ReportsSummaryDto {
   pendingApplications: number;
   acceptedApplications: number;
   rejectedApplications: number;
+}
+
+// Student Profile DTOs
+export interface StudentProfileDetailsDto {
+  student: StudentDto;
+  fatherContact: FamilyContactDto | null;
+  guardianContact: FamilyContactDto | null;
+  academicEducation: AcademicEducationDto | null;
+  secondaryEducation: SecondaryEducationDto | null;
+}
+
+export interface StudentAssignmentDto {
+  assignmentId: number;
+  roomId: number;
+  roomNumber: string | null;
+  buildingId: number;
+  buildingName: string | null;
+  assignedAt: string;
+}
+
+// Base Housing Fees DTO
+export interface BaseHousingFeeDto {
+  id: number;
+  amount: number;
+  notes: string | null;
+  createdAt: string;
 }

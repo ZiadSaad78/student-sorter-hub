@@ -64,7 +64,7 @@ export function AddRoomDialog({ open, onOpenChange, building }: AddRoomDialogPro
         </DialogHeader>
 
         <p className="text-muted-foreground text-sm">
-          إضافة غرفة إلى {building.buildingName}
+          إضافة غرفة إلى {building.name}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">

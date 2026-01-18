@@ -16,14 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useHousingStore } from "@/stores/housingStore";
+import { useHousingStore, BuildingWithRooms } from "@/stores/housingStore";
 import { DoorOpen } from "lucide-react";
-import { Building } from "@/types/housing";
 
 interface AddRoomDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  building: Building | null;
+  building: BuildingWithRooms | null;
 }
 
 export function AddRoomDialog({ open, onOpenChange, building }: AddRoomDialogProps) {
@@ -32,13 +31,14 @@ export function AddRoomDialog({ open, onOpenChange, building }: AddRoomDialogPro
   const [capacity, setCapacity] = useState("2");
 
   const addRoom = useHousingStore((state) => state.addRoom);
+  const loading = useHousingStore((state) => state.loading);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!number.trim() || !building) return;
 
-    addRoom(building.id, {
-      number: number.trim(),
+    await addRoom(building.buildingId, {
+      roomNumber: number.trim(),
       floor: parseInt(floor) || 1,
       capacity: parseInt(capacity) || 2,
     });
@@ -51,6 +51,8 @@ export function AddRoomDialog({ open, onOpenChange, building }: AddRoomDialogPro
 
   if (!building) return null;
 
+  const floors = building.numberOfFloors || 3;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -62,7 +64,7 @@ export function AddRoomDialog({ open, onOpenChange, building }: AddRoomDialogPro
         </DialogHeader>
 
         <p className="text-muted-foreground text-sm">
-          إضافة غرفة إلى {building.name}
+          إضافة غرفة إلى {building.buildingName}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
@@ -84,7 +86,7 @@ export function AddRoomDialog({ open, onOpenChange, building }: AddRoomDialogPro
                 <SelectValue placeholder="اختر الطابق" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: building.floors }, (_, i) => (
+                {Array.from({ length: floors }, (_, i) => (
                   <SelectItem key={i + 1} value={String(i + 1)}>
                     الطابق {i + 1}
                   </SelectItem>
@@ -113,8 +115,12 @@ export function AddRoomDialog({ open, onOpenChange, building }: AddRoomDialogPro
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               إلغاء
             </Button>
-            <Button type="submit" className="gradient-primary text-primary-foreground">
-              إضافة الغرفة
+            <Button 
+              type="submit" 
+              className="gradient-primary text-primary-foreground"
+              disabled={loading}
+            >
+              {loading ? "جاري الإضافة..." : "إضافة الغرفة"}
             </Button>
           </DialogFooter>
         </form>

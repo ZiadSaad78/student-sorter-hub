@@ -1,12 +1,12 @@
-import { Student } from "@/types/housing";
+import { StudentDto } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { User, GraduationCap, Phone, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StudentCardProps {
-  student: Student;
-  onAssign?: (studentId: string) => void;
-  onRemove?: (studentId: string) => void;
+  student: StudentDto;
+  onAssign?: (studentId: number) => void;
+  onRemove?: (studentId: number) => void;
   showAssign?: boolean;
   showRemove?: boolean;
   compact?: boolean;
@@ -20,6 +20,8 @@ export function StudentCard({
   showRemove = false,
   compact = false
 }: StudentCardProps) {
+  const isMale = student.gender?.toLowerCase() === "male" || student.gender === "ذكر";
+
   if (compact) {
     return (
       <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -28,7 +30,7 @@ export function StudentCard({
             <User className="w-4 h-4" />
           </div>
           <div>
-            <p className="font-medium text-sm text-foreground">{student.name}</p>
+            <p className="font-medium text-sm text-foreground">{student.fullName}</p>
             <p className="text-xs text-muted-foreground">{student.faculty}</p>
           </div>
         </div>
@@ -37,7 +39,7 @@ export function StudentCard({
             size="sm"
             variant="ghost"
             className="text-destructive hover:bg-destructive/10"
-            onClick={() => onRemove(student.id)}
+            onClick={() => onRemove(student.studentId)}
           >
             <X className="w-4 h-4" />
           </Button>
@@ -55,13 +57,13 @@ export function StudentCard({
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-12 h-12 rounded-full flex items-center justify-center",
-            student.gender === "male" ? "bg-blue-100 text-blue-600" : "bg-pink-100 text-pink-600"
+            isMale ? "bg-blue-100 text-blue-600" : "bg-pink-100 text-pink-600"
           )}>
             <User className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="font-bold text-foreground">{student.name}</h4>
-            <p className="text-sm text-muted-foreground">{student.studentId}</p>
+            <h4 className="font-bold text-foreground">{student.fullName}</h4>
+            <p className="text-sm text-muted-foreground">{student.nationalId}</p>
           </div>
         </div>
 
@@ -69,7 +71,7 @@ export function StudentCard({
           <Button
             size="sm"
             className="gradient-primary text-primary-foreground"
-            onClick={() => onAssign(student.id)}
+            onClick={() => onAssign(student.studentId)}
           >
             <Plus className="w-4 h-4 ml-1" />
             إضافة
@@ -82,9 +84,11 @@ export function StudentCard({
           <GraduationCap className="w-4 h-4" />
           {student.faculty}
         </span>
-        <span className="text-muted-foreground">
-          السنة {student.year}
-        </span>
+        {student.level && (
+          <span className="text-muted-foreground">
+            المستوى: {student.level}
+          </span>
+        )}
         {student.phone && (
           <span className="flex items-center gap-1 text-muted-foreground">
             <Phone className="w-4 h-4" />

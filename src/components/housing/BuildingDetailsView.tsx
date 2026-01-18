@@ -1,49 +1,50 @@
 import { useState } from "react";
-import { Building, Room } from "@/types/housing";
 import { Button } from "@/components/ui/button";
 import { RoomCard } from "./RoomCard";
 import { StudentCard } from "./StudentCard";
 import { AddRoomDialog } from "./AddRoomDialog";
 import { RoomDetailsSheet } from "./RoomDetailsSheet";
-import { useHousingStore } from "@/stores/housingStore";
+import { useHousingStore, BuildingWithRooms, RoomWithStudents } from "@/stores/housingStore";
 import { ArrowRight, Plus, Users, DoorOpen, AlertCircle } from "lucide-react";
 
 interface BuildingDetailsViewProps {
-  building: Building;
+  building: BuildingWithRooms;
   onBack: () => void;
 }
 
 export function BuildingDetailsView({ building, onBack }: BuildingDetailsViewProps) {
   const [showAddRoom, setShowAddRoom] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<RoomWithStudents | null>(null);
   const [showRoomDetails, setShowRoomDetails] = useState(false);
 
   const { acceptedStudents, assignStudentToRoom, buildings } = useHousingStore();
 
   // Get fresh building data from store
-  const freshBuilding = buildings.find((b) => b.id === building.id) || building;
+  const freshBuilding = buildings.find((b) => b.buildingId === building.buildingId) || building;
 
   // Filter students by gender matching building
-  const eligibleStudents = acceptedStudents.filter(
-    (s) => s.gender === freshBuilding.gender && s.status === "accepted"
-  );
+  const isMaleBuilding = freshBuilding.gender?.toLowerCase() === "male" || freshBuilding.gender === "بنين";
+  const eligibleStudents = acceptedStudents.filter((s) => {
+    const isMaleStudent = s.gender?.toLowerCase() === "male" || s.gender === "ذكر";
+    return isMaleBuilding === isMaleStudent;
+  });
 
-  const handleRoomClick = (room: Room) => {
+  const handleRoomClick = (room: RoomWithStudents) => {
     // Get fresh room data
-    const freshRoom = freshBuilding.rooms.find((r) => r.id === room.id);
+    const freshRoom = freshBuilding.rooms.find((r) => r.roomId === room.roomId);
     setSelectedRoom(freshRoom || room);
     setShowRoomDetails(true);
   };
 
-  const handleAssignStudent = (studentId: string) => {
+  const handleAssignStudent = async (studentId: number) => {
     if (selectedRoom) {
-      assignStudentToRoom(studentId, selectedRoom.id);
+      await assignStudentToRoom(studentId, selectedRoom.roomId);
     }
   };
 
   // Update selected room when store changes
   const currentSelectedRoom = selectedRoom
-    ? freshBuilding.rooms.find((r) => r.id === selectedRoom.id) || selectedRoom
+    ? freshBuilding.rooms.find((r) => r.roomId === selectedRoom.roomId) || selectedRoom
     : null;
 
   return (
@@ -55,9 +56,9 @@ export function BuildingDetailsView({ building, onBack }: BuildingDetailsViewPro
             <ArrowRight className="w-5 h-5" />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold text-foreground">{freshBuilding.name}</h2>
+            <h2 className="text-2xl font-bold text-foreground">{freshBuilding.buildingName}</h2>
             <p className="text-muted-foreground">
-              {freshBuilding.rooms.length} غرفة • {freshBuilding.floors} طوابق
+              {freshBuilding.rooms.length} غرفة • {freshBuilding.numberOfFloors} طوابق
             </p>
           </div>
         </div>
@@ -93,10 +94,10 @@ export function BuildingDetailsView({ building, onBack }: BuildingDetailsViewPro
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {freshBuilding.rooms.map((room) => (
               <RoomCard
-                key={room.id}
+                key={room.roomId}
                 room={room}
                 onClick={handleRoomClick}
-                isSelected={currentSelectedRoom?.id === room.id}
+                isSelected={currentSelectedRoom?.roomId === room.roomId}
               />
             ))}
           </div>
@@ -108,7 +109,7 @@ export function BuildingDetailsView({ building, onBack }: BuildingDetailsViewPro
         <h3 className="font-bold text-lg text-foreground mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-accent" />
           الطلاب المقبولين ({eligibleStudents.length})
-          {freshBuilding.gender === "male" ? " - بنين" : " - بنات"}
+          {isMaleBuilding ? " - بنين" : " - بنات"}
         </h3>
 
         {eligibleStudents.length === 0 ? (
@@ -120,9 +121,9 @@ export function BuildingDetailsView({ building, onBack }: BuildingDetailsViewPro
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {eligibleStudents.map((student) => (
               <StudentCard
-                key={student.id}
+                key={student.studentId}
                 student={student}
-                showAssign={!!currentSelectedRoom && currentSelectedRoom.students.length < currentSelectedRoom.capacity}
+                showAssign={!!currentSelectedRoom && currentSelectedRoom.currentOccupancy < currentSelectedRoom.capacity}
                 onAssign={handleAssignStudent}
               />
             ))}

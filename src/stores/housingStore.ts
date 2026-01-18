@@ -1,159 +1,252 @@
 import { create } from "zustand";
-import { Building, Room, Student } from "@/types/housing";
+import { BuildingDto, RoomDto, StudentDto } from "@/types/api";
+import { buildingService, roomService, studentService, applicationService } from "@/services/api";
 
-// Sample data
-const sampleStudents: Student[] = [
-  { id: "s1", name: "أحمد محمد علي", studentId: "2024001", faculty: "الهندسة", gender: "male", year: 2, status: "accepted" },
-  { id: "s2", name: "محمود حسن إبراهيم", studentId: "2024002", faculty: "الطب", gender: "male", year: 3, status: "accepted" },
-  { id: "s3", name: "خالد عبدالله سعيد", studentId: "2024003", faculty: "العلوم", gender: "male", year: 1, status: "accepted" },
-  { id: "s4", name: "فاطمة أحمد محمد", studentId: "2024004", faculty: "الصيدلة", gender: "female", year: 2, status: "accepted" },
-  { id: "s5", name: "مريم حسين كمال", studentId: "2024005", faculty: "التجارة", gender: "female", year: 4, status: "accepted" },
-  { id: "s6", name: "نورا علي عبدالرحمن", studentId: "2024006", faculty: "الآداب", gender: "female", year: 1, status: "accepted" },
-];
+// Extended types for frontend use
+export interface RoomWithStudents extends RoomDto {
+  students: StudentDto[];
+}
 
-const initialBuildings: Building[] = [
-  {
-    id: "b1",
-    name: "مبنى (أ) - بنين",
-    gender: "male",
-    floors: 5,
-    rooms: [
-      { id: "r1", number: "101", buildingId: "b1", floor: 1, capacity: 3, students: [] },
-      { id: "r2", number: "102", buildingId: "b1", floor: 1, capacity: 3, students: [] },
-      { id: "r3", number: "103", buildingId: "b1", floor: 1, capacity: 2, students: [] },
-      { id: "r4", number: "201", buildingId: "b1", floor: 2, capacity: 3, students: [] },
-      { id: "r5", number: "202", buildingId: "b1", floor: 2, capacity: 3, students: [] },
-    ],
-  },
-  {
-    id: "b2",
-    name: "مبنى (ب) - بنات",
-    gender: "female",
-    floors: 4,
-    rooms: [
-      { id: "r6", number: "101", buildingId: "b2", floor: 1, capacity: 2, students: [] },
-      { id: "r7", number: "102", buildingId: "b2", floor: 1, capacity: 2, students: [] },
-      { id: "r8", number: "201", buildingId: "b2", floor: 2, capacity: 3, students: [] },
-    ],
-  },
-];
+export interface BuildingWithRooms extends BuildingDto {
+  rooms: RoomWithStudents[];
+}
 
 interface HousingState {
-  buildings: Building[];
-  acceptedStudents: Student[];
-  selectedRoom: Room | null;
-  selectedBuilding: Building | null;
+  buildings: BuildingWithRooms[];
+  allRooms: RoomDto[];
+  acceptedStudents: StudentDto[];
+  selectedRoom: RoomWithStudents | null;
+  selectedBuilding: BuildingWithRooms | null;
+  loading: boolean;
+  error: string | null;
 
   // Actions
-  addBuilding: (building: Omit<Building, "id" | "rooms">) => void;
-  addRoom: (buildingId: string, room: Omit<Room, "id" | "buildingId" | "students">) => void;
-  setSelectedRoom: (room: Room | null) => void;
-  setSelectedBuilding: (building: Building | null) => void;
-  assignStudentToRoom: (studentId: string, roomId: string) => void;
-  removeStudentFromRoom: (studentId: string, roomId: string) => void;
+  fetchBuildings: () => Promise<void>;
+  fetchRooms: () => Promise<void>;
+  fetchAcceptedStudents: () => Promise<void>;
+  addBuilding: (building: { buildingName: string; gender: string; numberOfFloors: number }) => Promise<void>;
+  addRoom: (buildingId: number, room: { roomNumber: string; capacity: number; floor?: number }) => Promise<void>;
+  setSelectedRoom: (room: RoomWithStudents | null) => void;
+  setSelectedBuilding: (building: BuildingWithRooms | null) => void;
+  assignStudentToRoom: (studentId: number, roomId: number) => Promise<void>;
+  removeStudentFromRoom: (assignmentId: number) => Promise<void>;
+  deleteBuilding: (buildingId: number) => Promise<void>;
+  deleteRoom: (roomId: number) => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
 export const useHousingStore = create<HousingState>((set, get) => ({
-  buildings: initialBuildings,
-  acceptedStudents: sampleStudents,
+  buildings: [],
+  allRooms: [],
+  acceptedStudents: [],
   selectedRoom: null,
   selectedBuilding: null,
+  loading: false,
+  error: null,
 
-  addBuilding: (building) => {
-    const newBuilding: Building = {
-      ...building,
-      id: `b${Date.now()}`,
-      rooms: [],
-    };
-    set((state) => ({
-      buildings: [...state.buildings, newBuilding],
-    }));
+  fetchBuildings: async () => {
+    set({ loading: true, error: null });
+    try {
+      const [buildingsRes, roomsRes] = await Promise.all([
+        buildingService.getAll(),
+        roomService.getAll(),
+      ]);
+
+      if (buildingsRes.error) {
+        set({ error: buildingsRes.error, loading: false });
+        return;
+      }
+
+      const buildings = buildingsRes.data || [];
+      const rooms = roomsRes.data || [];
+
+      // Group rooms by building and add empty students array
+      const buildingsWithRooms: BuildingWithRooms[] = buildings.map((building) => ({
+        ...building,
+        rooms: rooms
+          .filter((room) => room.buildingId === building.buildingId)
+          .map((room) => ({ ...room, students: [] })),
+      }));
+
+      set({ buildings: buildingsWithRooms, allRooms: rooms, loading: false });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to fetch buildings', loading: false });
+    }
   },
 
-  addRoom: (buildingId, room) => {
-    const newRoom: Room = {
-      ...room,
-      id: `r${Date.now()}`,
-      buildingId,
-      students: [],
-    };
-    set((state) => ({
-      buildings: state.buildings.map((b) =>
-        b.id === buildingId
-          ? { ...b, rooms: [...b.rooms, newRoom] }
-          : b
-      ),
-    }));
+  fetchRooms: async () => {
+    try {
+      const response = await roomService.getAll();
+      if (response.data) {
+        set({ allRooms: response.data });
+      }
+    } catch (error) {
+      console.error('Failed to fetch rooms:', error);
+    }
+  },
+
+  fetchAcceptedStudents: async () => {
+    try {
+      // Get applications with accepted status
+      const response = await applicationService.getAllApplications();
+      if (response.data) {
+        // Filter for accepted applications and convert to student format
+        const acceptedApps = response.data.filter(app => 
+          app.status?.toLowerCase() === 'accepted' || 
+          app.status?.toLowerCase() === 'مقبول'
+        );
+        
+        // Convert to StudentDto format
+        const students: StudentDto[] = acceptedApps.map(app => ({
+          studentId: app.studentId,
+          nationalId: app.nationalId,
+          fullName: app.studentName,
+          studentType: 0,
+          birthDate: '',
+          birthPlace: null,
+          gender: app.gender,
+          religion: null,
+          governorate: app.governorate,
+          city: null,
+          address: null,
+          email: app.email || null,
+          phone: app.phone || null,
+          faculty: app.faculty,
+          department: null,
+          level: app.level,
+          fatherContactId: 0,
+          guardianContactId: 0,
+          userId: 0,
+        }));
+        
+        set({ acceptedStudents: students });
+      }
+    } catch (error) {
+      console.error('Failed to fetch accepted students:', error);
+    }
+  },
+
+  addBuilding: async (building) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await buildingService.create({
+        buildingName: building.buildingName,
+        gender: building.gender,
+        numberOfFloors: building.numberOfFloors,
+        status: 'active',
+      });
+
+      if (response.error) {
+        set({ error: response.error, loading: false });
+        return;
+      }
+
+      // Refresh buildings list
+      await get().fetchBuildings();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to add building', loading: false });
+    }
+  },
+
+  addRoom: async (buildingId, room) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await roomService.create({
+        roomNumber: room.roomNumber,
+        capacity: room.capacity,
+        buildingId: buildingId,
+        status: 0,
+      });
+
+      if (response.error) {
+        set({ error: response.error, loading: false });
+        return;
+      }
+
+      // Refresh buildings list
+      await get().fetchBuildings();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to add room', loading: false });
+    }
   },
 
   setSelectedRoom: (room) => set({ selectedRoom: room }),
   setSelectedBuilding: (building) => set({ selectedBuilding: building }),
 
-  assignStudentToRoom: (studentId, roomId) => {
-    const { acceptedStudents, buildings } = get();
-    const student = acceptedStudents.find((s) => s.id === studentId);
-    if (!student) return;
+  assignStudentToRoom: async (studentId, roomId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await roomService.assignStudent({
+        studentId,
+        roomId,
+      });
 
-    // Find room and check capacity
-    const building = buildings.find((b) => b.rooms.some((r) => r.id === roomId));
-    const room = building?.rooms.find((r) => r.id === roomId);
-    if (!room || room.students.length >= room.capacity) return;
+      if (response.error) {
+        set({ error: response.error, loading: false });
+        return;
+      }
 
-    // Check gender match
-    if (building && building.gender !== student.gender) return;
-
-    const housedStudent: Student = { ...student, status: "housed", roomId };
-
-    set((state) => ({
-      acceptedStudents: state.acceptedStudents.filter((s) => s.id !== studentId),
-      buildings: state.buildings.map((b) =>
-        b.rooms.some((r) => r.id === roomId)
-          ? {
-              ...b,
-              rooms: b.rooms.map((r) =>
-                r.id === roomId
-                  ? { ...r, students: [...r.students, housedStudent] }
-                  : r
-              ),
-            }
-          : b
-      ),
-      selectedRoom: state.selectedRoom?.id === roomId
-        ? { ...state.selectedRoom, students: [...state.selectedRoom.students, housedStudent] }
-        : state.selectedRoom,
-    }));
+      // Refresh data
+      await get().refreshData();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to assign student', loading: false });
+    }
   },
 
-  removeStudentFromRoom: (studentId, roomId) => {
-    set((state) => {
-      let removedStudent: Student | null = null;
+  removeStudentFromRoom: async (assignmentId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await roomService.removeAssignment(assignmentId);
 
-      const updatedBuildings = state.buildings.map((b) => ({
-        ...b,
-        rooms: b.rooms.map((r) => {
-          if (r.id === roomId) {
-            const student = r.students.find((s) => s.id === studentId);
-            if (student) {
-              removedStudent = { ...student, status: "accepted", roomId: undefined };
-            }
-            return { ...r, students: r.students.filter((s) => s.id !== studentId) };
-          }
-          return r;
-        }),
-      }));
+      if (response.error) {
+        set({ error: response.error, loading: false });
+        return;
+      }
 
-      return {
-        buildings: updatedBuildings,
-        acceptedStudents: removedStudent
-          ? [...state.acceptedStudents, removedStudent]
-          : state.acceptedStudents,
-        selectedRoom: state.selectedRoom?.id === roomId
-          ? {
-              ...state.selectedRoom,
-              students: state.selectedRoom.students.filter((s) => s.id !== studentId)
-            }
-          : state.selectedRoom,
-      };
-    });
+      // Refresh data
+      await get().refreshData();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to remove student', loading: false });
+    }
+  },
+
+  deleteBuilding: async (buildingId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await buildingService.delete(buildingId);
+
+      if (response.error) {
+        set({ error: response.error, loading: false });
+        return;
+      }
+
+      // Refresh buildings list
+      await get().fetchBuildings();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to delete building', loading: false });
+    }
+  },
+
+  deleteRoom: async (roomId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await roomService.delete(roomId);
+
+      if (response.error) {
+        set({ error: response.error, loading: false });
+        return;
+      }
+
+      // Refresh buildings list
+      await get().fetchBuildings();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to delete room', loading: false });
+    }
+  },
+
+  refreshData: async () => {
+    const { fetchBuildings, fetchAcceptedStudents } = get();
+    await Promise.all([fetchBuildings(), fetchAcceptedStudents()]);
+    set({ loading: false });
   },
 }));

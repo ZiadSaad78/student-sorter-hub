@@ -24,14 +24,15 @@ export function AddBuildingDialog({ open, onOpenChange }: AddBuildingDialogProps
   const [gender, setGender] = useState<"male" | "female">("male");
 
   const addBuilding = useHousingStore((state) => state.addBuilding);
+  const loading = useHousingStore((state) => state.loading);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    addBuilding({
-      name: name.trim(),
-      floors: parseInt(floors) || 3,
+    await addBuilding({
+      buildingName: name.trim(),
+      numberOfFloors: parseInt(floors) || 3,
       gender,
     });
 
@@ -98,8 +99,12 @@ export function AddBuildingDialog({ open, onOpenChange }: AddBuildingDialogProps
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               إلغاء
             </Button>
-            <Button type="submit" className="gradient-primary text-primary-foreground">
-              إضافة المبنى
+            <Button 
+              type="submit" 
+              className="gradient-primary text-primary-foreground"
+              disabled={loading}
+            >
+              {loading ? "جاري الإضافة..." : "إضافة المبنى"}
             </Button>
           </DialogFooter>
         </form>

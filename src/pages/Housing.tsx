@@ -1,20 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from '@/components/student/Header';
 import { StatCard } from "@/components/housing/StatCard";
 import { BuildingCard } from "@/components/housing/BuildingCard";
 import { AddBuildingDialog } from "@/components/housing/AddBuildingDialog";
 import { BuildingDetailsView } from "@/components/housing/BuildingDetailsView";
-import { useHousingStore } from "@/stores/housingStore";
-import { Building2, DoorOpen, Bed, Plus } from "lucide-react";
+import { useHousingStore, BuildingWithRooms } from "@/stores/housingStore";
+import { Building2, DoorOpen, Bed, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Building } from "@/types/housing";
 
 const Housing = () => {
   const [showAddBuilding, setShowAddBuilding] = useState(false);
-  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<BuildingWithRooms | null>(null);
 
-  const buildings = useHousingStore((state) => state.buildings);
-  const acceptedStudents = useHousingStore((state) => state.acceptedStudents);
+  const { 
+    buildings, 
+    acceptedStudents, 
+    loading, 
+    error,
+    fetchBuildings, 
+    fetchAcceptedStudents 
+  } = useHousingStore();
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchBuildings();
+    fetchAcceptedStudents();
+  }, [fetchBuildings, fetchAcceptedStudents]);
 
   // Calculate stats
   const totalRooms = buildings.reduce((sum, b) => sum + b.rooms.length, 0);
@@ -23,20 +34,40 @@ const Housing = () => {
     0
   );
   const totalOccupied = buildings.reduce(
-    (sum, b) => sum + b.rooms.reduce((rs, r) => rs + r.students.length, 0),
+    (sum, b) => sum + b.rooms.reduce((rs, r) => rs + r.currentOccupancy, 0),
     0
   );
   const availableBeds = totalCapacity - totalOccupied;
 
-  const handleViewBuildingDetails = (building: Building) => {
+  const handleViewBuildingDetails = (building: BuildingWithRooms) => {
     setSelectedBuilding(building);
   };
+
+  if (loading && buildings.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
+            <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
+        {error && (
+          <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
+            {error}
+          </div>
+        )}
+
         {selectedBuilding ? (
           <BuildingDetailsView
             building={selectedBuilding}
@@ -88,7 +119,7 @@ const Housing = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {buildings.map((building, index) => (
                 <div
-                  key={building.id}
+                  key={building.buildingId}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <BuildingCard

@@ -1,16 +1,20 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { authService } from '@/services/api';
+import { getStoredToken, removeToken, storeToken } from '@/services/api/config';
+import { LoginResponse } from '@/types/api';
 
-type AppRole = 'super_admin' | 'admin';
+interface AuthUser {
+  id: number;
+  email: string;
+  role: string;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  role: AppRole | null;
+  user: AuthUser | null;
+  token: string | null;
+  role: string | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signIn: (username: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isSuperAdmin: boolean;
   isAdmin: boolean;
@@ -19,104 +23,79 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [role, setRole] = useState<AppRole | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching role:', error);
-      return null;
-    }
-    
-    return data?.role as AppRole | null;
-  };
-
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Use setTimeout to avoid potential deadlock
-          setTimeout(async () => {
-            const userRole = await fetchUserRole(session.user.id);
-            setRole(userRole);
-            setLoading(false);
-          }, 0);
-        } else {
-          setRole(null);
-          setLoading(false);
+    // Check for existing token on mount
+    const storedToken = getStoredToken();
+    if (storedToken) {
+      setToken(storedToken);
+      // Try to parse user info from token if stored
+      const storedUser = localStorage.getItem('auth_user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          setRole(parsedUser.role);
+        } catch (e) {
+          console.error('Error parsing stored user:', e);
         }
       }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserRole(session.user.id).then(userRole => {
-          setRole(userRole);
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    }
+    setLoading(false);
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
-  };
+  const signIn = async (username: string, password: string) => {
+    try {
+      const response = await authService.login({ username, password });
+      
+      if (response.error) {
+        return { error: new Error(response.error) };
+      }
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
-    return { error };
+      if (response.data?.token) {
+        const loginData = response.data as LoginResponse;
+        setToken(loginData.token);
+        
+        const authUser: AuthUser = {
+          id: loginData.userId || 0,
+          email: username,
+          role: loginData.role || 'admin',
+        };
+        
+        setUser(authUser);
+        setRole(authUser.role);
+        localStorage.setItem('auth_user', JSON.stringify(authUser));
+        
+        return { error: null };
+      }
+
+      return { error: new Error('Invalid response from server') };
+    } catch (error) {
+      return { error: error as Error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    authService.logout();
     setUser(null);
-    setSession(null);
+    setToken(null);
     setRole(null);
+    localStorage.removeItem('auth_user');
   };
 
   const value: AuthContextType = {
     user,
-    session,
+    token,
     role,
     loading,
     signIn,
-    signUp,
     signOut,
-    isSuperAdmin: role === 'super_admin',
-    isAdmin: role === 'super_admin' || role === 'admin',
+    isSuperAdmin: role === 'SuperAdmin' || role === 'super_admin',
+    isAdmin: role === 'SuperAdmin' || role === 'super_admin' || role === 'Admin' || role === 'admin',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

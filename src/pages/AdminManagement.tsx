@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Trash2, Shield, ShieldCheck, Loader2 } from 'lucide-react';
+import { authService, userService } from '@/services/api';
 import {
   Dialog,
   DialogContent,
@@ -19,56 +19,27 @@ import {
 } from '@/components/ui/dialog';
 
 interface AdminUser {
-  id: string;
-  user_id: string;
-  role: 'super_admin' | 'admin';
-  created_at: string;
-  profile: {
-    email: string;
-    full_name: string | null;
-  } | null;
+  id: number;
+  userName: string;
+  role: string;
+  createdAt?: string;
 }
 
 export default function AdminManagement() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminUsername, setNewAdminUsername] = useState('');
   const [newAdminPassword, setNewAdminPassword] = useState('');
-  const [newAdminName, setNewAdminName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const fetchAdmins = async () => {
     setLoading(true);
-    const { data: rolesData, error: rolesError } = await supabase
-      .from('user_roles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (rolesError) {
-      console.error('Error fetching admins:', rolesError);
-      setLoading(false);
-      return;
-    }
-
-    // Fetch profiles for each admin
-    const adminsWithProfiles: AdminUser[] = [];
-    for (const role of rolesData || []) {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('email, full_name')
-        .eq('user_id', role.user_id)
-        .maybeSingle();
-
-      adminsWithProfiles.push({
-        ...role,
-        profile: profileData,
-      });
-    }
-
-    setAdmins(adminsWithProfiles);
+    // Note: The backend doesn't have a direct endpoint to list all admins
+    // This would need to be added or we use a placeholder
+    // For now, we'll show an empty state
     setLoading(false);
   };
 
@@ -80,92 +51,54 @@ export default function AdminManagement() {
     e.preventDefault();
     setIsCreating(true);
 
-    // First, create the user account
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: newAdminEmail,
+    const response = await authService.createAdmin({
+      userName: newAdminUsername,
       password: newAdminPassword,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: {
-          full_name: newAdminName,
-        },
-      },
+      role: 'Admin',
     });
 
-    if (signUpError) {
+    if (response.error) {
       toast({
         title: 'خطأ في إنشاء الحساب',
-        description: signUpError.message,
-        variant: 'destructive',
-      });
-      setIsCreating(false);
-      return;
-    }
-
-    if (!signUpData.user) {
-      toast({
-        title: 'خطأ',
-        description: 'فشل في إنشاء المستخدم',
-        variant: 'destructive',
-      });
-      setIsCreating(false);
-      return;
-    }
-
-    // Add admin role
-    const { error: roleError } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: signUpData.user.id,
-        role: 'admin',
-      });
-
-    if (roleError) {
-      toast({
-        title: 'خطأ في تعيين الصلاحية',
-        description: roleError.message,
+        description: response.error,
         variant: 'destructive',
       });
     } else {
       toast({
         title: 'تم إنشاء المسؤول بنجاح',
-        description: `تم إضافة ${newAdminName} كمسؤول جديد`,
+        description: `تم إضافة ${newAdminUsername} كمسؤول جديد`,
       });
       setDialogOpen(false);
-      setNewAdminEmail('');
+      setNewAdminUsername('');
       setNewAdminPassword('');
-      setNewAdminName('');
       fetchAdmins();
     }
 
     setIsCreating(false);
   };
 
-  const handleRemoveAdmin = async (roleId: string, adminUserId: string) => {
-    if (adminUserId === user?.id) {
+  const handleRemoveAdmin = async (adminId: number) => {
+    if (adminId === user?.id) {
       toast({
         title: 'خطأ',
-        description: 'لا يمكنك حذف صلاحياتك الخاصة',
+        description: 'لا يمكنك حذف حسابك الخاص',
         variant: 'destructive',
       });
       return;
     }
 
-    const { error } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('id', roleId);
+    const response = await userService.delete(adminId);
 
-    if (error) {
+    if (response.error) {
       toast({
         title: 'خطأ في حذف المسؤول',
-        description: error.message,
+        description: response.error,
         variant: 'destructive',
       });
     } else {
       toast({
         title: 'تم حذف المسؤول',
-        description: 'تم إزالة صلاحيات المسؤول بنجاح',
+        description: 'تم إزالة المسؤول بنجاح',
       });
       fetchAdmins();
     }
@@ -194,23 +127,12 @@ export default function AdminManagement() {
             </DialogHeader>
             <form onSubmit={handleCreateAdmin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">الاسم الكامل</Label>
+                <Label htmlFor="username">اسم المستخدم</Label>
                 <Input
-                  id="name"
-                  value={newAdminName}
-                  onChange={(e) => setNewAdminName(e.target.value)}
-                  placeholder="أدخل الاسم الكامل"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">البريد الإلكتروني</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={newAdminEmail}
-                  onChange={(e) => setNewAdminEmail(e.target.value)}
-                  placeholder="admin@university.edu"
+                  id="username"
+                  value={newAdminUsername}
+                  onChange={(e) => setNewAdminUsername(e.target.value)}
+                  placeholder="أدخل اسم المستخدم"
                   required
                   dir="ltr"
                 />
@@ -255,14 +177,15 @@ export default function AdminManagement() {
             </div>
           ) : admins.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              لا يوجد مسؤولين مسجلين
+              <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>لا يوجد مسؤولين مسجلين</p>
+              <p className="text-sm mt-2">استخدم زر "إضافة مسؤول جديد" لإضافة مسؤول</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">الاسم</TableHead>
-                  <TableHead className="text-right">البريد الإلكتروني</TableHead>
+                  <TableHead className="text-right">اسم المستخدم</TableHead>
                   <TableHead className="text-right">الصلاحية</TableHead>
                   <TableHead className="text-right">تاريخ الإضافة</TableHead>
                   <TableHead className="text-right">الإجراءات</TableHead>
@@ -271,18 +194,15 @@ export default function AdminManagement() {
               <TableBody>
                 {admins.map((admin) => (
                   <TableRow key={admin.id}>
-                    <TableCell className="font-medium">
-                      {admin.profile?.full_name || 'غير محدد'}
-                    </TableCell>
-                    <TableCell dir="ltr" className="text-left">
-                      {admin.profile?.email || 'غير متوفر'}
+                    <TableCell className="font-medium" dir="ltr">
+                      {admin.userName}
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={admin.role === 'super_admin' ? 'default' : 'secondary'}
+                        variant={admin.role === 'SuperAdmin' ? 'default' : 'secondary'}
                         className="gap-1"
                       >
-                        {admin.role === 'super_admin' ? (
+                        {admin.role === 'SuperAdmin' ? (
                           <>
                             <ShieldCheck className="w-3 h-3" />
                             مسؤول رئيسي
@@ -296,14 +216,14 @@ export default function AdminManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {new Date(admin.created_at).toLocaleDateString('ar-EG')}
+                      {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString('ar-EG') : '-'}
                     </TableCell>
                     <TableCell>
-                      {admin.role !== 'super_admin' && (
+                      {admin.role !== 'SuperAdmin' && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleRemoveAdmin(admin.id, admin.user_id)}
+                          onClick={() => handleRemoveAdmin(admin.id)}
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>

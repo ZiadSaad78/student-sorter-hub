@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requireSuperAdmin = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin, isSuperAdmin } = useAuth();
+  const { token, loading, isSuperAdmin, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children, requireSuperAdmin = false }: 
     );
   }
 
-  if (!user) {
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 

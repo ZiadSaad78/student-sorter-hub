@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
@@ -20,12 +20,12 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(username, password);
 
     if (error) {
       toast({
         title: 'خطأ في تسجيل الدخول',
-        description: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+        description: error.message || 'اسم المستخدم أو كلمة المرور غير صحيحة',
         variant: 'destructive',
       });
     } else {
@@ -54,15 +54,15 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Label htmlFor="username">اسم المستخدم</Label>
               <div className="relative">
-                <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@university.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="username"
+                  type="text"
+                  placeholder="أدخل اسم المستخدم"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="pr-10"
                   required
                   dir="ltr"

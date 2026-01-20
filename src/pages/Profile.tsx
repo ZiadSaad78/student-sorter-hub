@@ -8,10 +8,11 @@ const Profile = () => {
   const assignments = mockAssignmentsData;
   
   // Demo mode - show as admin
-  const role: 'Admin' | 'SuperAdmin' | 'Student' = 'Admin';
+  const role: string = 'Admin';
+  const isAdmin = role === 'Admin' || role === 'SuperAdmin';
 
   // Admin profile view
-  if (role === 'Admin' || role === 'SuperAdmin') {
+  if (isAdmin) {
     return (
       <div className="min-h-screen bg-background">
         <Header />

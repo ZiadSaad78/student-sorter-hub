@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, AlertCircle, Loader2, Plus, Trash2, Edit } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, Clock, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Header from '@/components/student/Header';
-import { applicationService } from '@/services/api';
 import { ApplicationWindowDto } from '@/types/api';
 import { useToast } from '@/hooks/use-toast';
+import { mockWindowsData } from '@/data/staticData';
 import {
   Dialog,
   DialogContent,
@@ -32,19 +32,18 @@ const getWindowStatus = (startDate: string, endDate: string): string => {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'active':
-      return <Badge className="bg-green-100 text-green-700">جاري</Badge>;
+      return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">جاري</Badge>;
     case 'completed':
       return <Badge variant="secondary">منتهي</Badge>;
     case 'upcoming':
-      return <Badge className="bg-blue-100 text-blue-700">قادم</Badge>;
+      return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">قادم</Badge>;
     default:
       return null;
   }
 };
 
 const Schedule = () => {
-  const [windows, setWindows] = useState<ApplicationWindowDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [windows, setWindows] = useState<ApplicationWindowDto[]>(mockWindowsData);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -55,72 +54,38 @@ const Schedule = () => {
   });
   const { toast } = useToast();
 
-  const fetchWindows = async () => {
-    setLoading(true);
-    const response = await applicationService.getWindows();
-    
-    if (response.error) {
-      toast({
-        title: 'خطأ في جلب البيانات',
-        description: response.error,
-        variant: 'destructive',
-      });
-    } else if (response.data) {
-      setWindows(response.data);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchWindows();
-  }, []);
-
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
 
-    const response = await applicationService.createWindow({
+    // Mock create - add to local state
+    const newWindow: ApplicationWindowDto = {
+      windowId: windows.length + 1,
       title: formData.title,
       description: formData.description,
       startDate: new Date(formData.startDate).toISOString(),
       endDate: new Date(formData.endDate).toISOString(),
+      createdAt: new Date().toISOString(),
+      status: 'upcoming',
+      userId: 1,
+    };
+
+    setWindows([...windows, newWindow]);
+    toast({
+      title: 'تم إنشاء الفترة بنجاح',
+      description: 'تم إضافة فترة التقديم الجديدة',
     });
-
-    if (response.error) {
-      toast({
-        title: 'خطأ في إنشاء الفترة',
-        description: response.error,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'تم إنشاء الفترة بنجاح',
-        description: 'تم إضافة فترة التقديم الجديدة',
-      });
-      setDialogOpen(false);
-      setFormData({ title: '', description: '', startDate: '', endDate: '' });
-      fetchWindows();
-    }
-
+    setDialogOpen(false);
+    setFormData({ title: '', description: '', startDate: '', endDate: '' });
     setIsCreating(false);
   };
 
-  const handleDelete = async (windowId: number) => {
-    const response = await applicationService.deleteWindow(windowId);
-    
-    if (response.error) {
-      toast({
-        title: 'خطأ في حذف الفترة',
-        description: response.error,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'تم حذف الفترة',
-        description: 'تم حذف فترة التقديم بنجاح',
-      });
-      fetchWindows();
-    }
+  const handleDelete = (windowId: number) => {
+    setWindows(windows.filter(w => w.windowId !== windowId));
+    toast({
+      title: 'تم حذف الفترة',
+      description: 'تم حذف فترة التقديم بنجاح',
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -130,14 +95,6 @@ const Schedule = () => {
       day: 'numeric',
     });
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -258,13 +215,13 @@ const Schedule = () => {
                       </div>
                     </div>
                     {status === 'active' && (
-                      <div className="mt-4 p-3 bg-green-50 rounded-lg flex items-center gap-2 text-green-700">
+                      <div className="mt-4 p-3 bg-green-500/10 rounded-lg flex items-center gap-2 text-green-600">
                         <CheckCircle className="h-5 w-5" />
                         <span>فترة التقديم مفتوحة حالياً</span>
                       </div>
                     )}
                     {status === 'upcoming' && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center gap-2 text-blue-700">
+                      <div className="mt-4 p-3 bg-blue-500/10 rounded-lg flex items-center gap-2 text-blue-600">
                         <AlertCircle className="h-5 w-5" />
                         <span>سيتم فتح التقديم قريباً</span>
                       </div>

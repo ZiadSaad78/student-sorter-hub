@@ -1,31 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Header from '@/components/student/Header';
 import { StatCard } from "@/components/housing/StatCard";
 import { BuildingCard } from "@/components/housing/BuildingCard";
 import { AddBuildingDialog } from "@/components/housing/AddBuildingDialog";
 import { BuildingDetailsView } from "@/components/housing/BuildingDetailsView";
-import { useHousingStore, BuildingWithRooms } from "@/stores/housingStore";
-import { Building2, DoorOpen, Bed, Plus, Loader2 } from "lucide-react";
+import { BuildingWithRooms } from "@/stores/housingStore";
+import { mockBuildingsData } from "@/data/staticData";
+import { Building2, DoorOpen, Bed, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Housing = () => {
   const [showAddBuilding, setShowAddBuilding] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingWithRooms | null>(null);
-
-  const { 
-    buildings, 
-    acceptedStudents, 
-    loading, 
-    error,
-    fetchBuildings, 
-    fetchAcceptedStudents 
-  } = useHousingStore();
-
-  // Fetch data on mount
-  useEffect(() => {
-    fetchBuildings();
-    fetchAcceptedStudents();
-  }, [fetchBuildings, fetchAcceptedStudents]);
+  const [buildings, setBuildings] = useState<BuildingWithRooms[]>(mockBuildingsData);
+  const { toast } = useToast();
 
   // Calculate stats
   const totalRooms = buildings.reduce((sum, b) => sum + b.rooms.length, 0);
@@ -38,36 +27,33 @@ const Housing = () => {
     0
   );
   const availableBeds = totalCapacity - totalOccupied;
+  const acceptedStudentsCount = 12; // Mock count
 
   const handleViewBuildingDetails = (building: BuildingWithRooms) => {
     setSelectedBuilding(building);
   };
 
-  if (loading && buildings.length === 0) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="flex items-center justify-center h-[60vh]">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
-            <p className="text-muted-foreground">جاري تحميل البيانات...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleAddBuilding = (buildingData: { name: string; type: string; numberOfFloors: number }) => {
+    const newBuilding: BuildingWithRooms = {
+      buildingId: buildings.length + 1,
+      name: buildingData.name,
+      type: buildingData.type,
+      numberOfFloors: buildingData.numberOfFloors,
+      status: 'active',
+      rooms: [],
+    };
+    setBuildings([...buildings, newBuilding]);
+    toast({
+      title: 'تم إضافة المبنى',
+      description: `تم إضافة ${buildingData.name} بنجاح`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
-        {error && (
-          <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
-            {error}
-          </div>
-        )}
-
         {selectedBuilding ? (
           <BuildingDetailsView
             building={selectedBuilding}
@@ -108,9 +94,9 @@ const Housing = () => {
                 variant="green"
               />
               <StatCard
-                icon={<Building2 className="w-6 h-6" />}
+                icon={<Users className="w-6 h-6" />}
                 label="طلاب بانتظار التسكين"
-                value={acceptedStudents.length}
+                value={acceptedStudentsCount}
                 variant="blue"
               />
             </div>

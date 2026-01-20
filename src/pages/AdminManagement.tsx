@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Trash2, Shield, ShieldCheck, Loader2 } from 'lucide-react';
-import { authService, userService } from '@/services/api';
+import { mockAdminsData } from '@/data/staticData';
 import {
   Dialog,
   DialogContent,
@@ -26,82 +25,52 @@ interface AdminUser {
 }
 
 export default function AdminManagement() {
-  const [admins, setAdmins] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [admins, setAdmins] = useState<AdminUser[]>(mockAdminsData);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newAdminUsername, setNewAdminUsername] = useState('');
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchAdmins = async () => {
-    setLoading(true);
-    // Note: The backend doesn't have a direct endpoint to list all admins
-    // This would need to be added or we use a placeholder
-    // For now, we'll show an empty state
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchAdmins();
-  }, []);
-
-  const handleCreateAdmin = async (e: React.FormEvent) => {
+  const handleCreateAdmin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
 
-    const response = await authService.createAdmin({
+    // Mock create - add to local state
+    const newAdmin: AdminUser = {
+      id: admins.length + 1,
       userName: newAdminUsername,
-      password: newAdminPassword,
       role: 'Admin',
+      createdAt: new Date().toISOString(),
+    };
+
+    setAdmins([...admins, newAdmin]);
+    toast({
+      title: 'تم إنشاء المسؤول بنجاح',
+      description: `تم إضافة ${newAdminUsername} كمسؤول جديد`,
     });
-
-    if (response.error) {
-      toast({
-        title: 'خطأ في إنشاء الحساب',
-        description: response.error,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'تم إنشاء المسؤول بنجاح',
-        description: `تم إضافة ${newAdminUsername} كمسؤول جديد`,
-      });
-      setDialogOpen(false);
-      setNewAdminUsername('');
-      setNewAdminPassword('');
-      fetchAdmins();
-    }
-
+    setDialogOpen(false);
+    setNewAdminUsername('');
+    setNewAdminPassword('');
     setIsCreating(false);
   };
 
-  const handleRemoveAdmin = async (adminId: number) => {
-    if (adminId === user?.id) {
+  const handleRemoveAdmin = (adminId: number) => {
+    const admin = admins.find(a => a.id === adminId);
+    if (admin?.role === 'SuperAdmin') {
       toast({
         title: 'خطأ',
-        description: 'لا يمكنك حذف حسابك الخاص',
+        description: 'لا يمكن حذف المسؤول الرئيسي',
         variant: 'destructive',
       });
       return;
     }
 
-    const response = await userService.delete(adminId);
-
-    if (response.error) {
-      toast({
-        title: 'خطأ في حذف المسؤول',
-        description: response.error,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'تم حذف المسؤول',
-        description: 'تم إزالة المسؤول بنجاح',
-      });
-      fetchAdmins();
-    }
+    setAdmins(admins.filter(a => a.id !== adminId));
+    toast({
+      title: 'تم حذف المسؤول',
+      description: 'تم إزالة المسؤول بنجاح',
+    });
   };
 
   return (
@@ -171,11 +140,7 @@ export default function AdminManagement() {
           <CardDescription>جميع المسؤولين المسجلين في النظام</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : admins.length === 0 ? (
+          {admins.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>لا يوجد مسؤولين مسجلين</p>

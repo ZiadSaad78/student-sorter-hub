@@ -1,0 +1,282 @@
+// Static mock data for demo/preview purposes
+
+import { Student } from '@/types/student';
+import { ApplicationWindowDto, StudentProfileDetailsDto, StudentAssignmentDto } from '@/types/api';
+import { BuildingWithRooms } from '@/stores/housingStore';
+
+// Mock Students Data
+export const mockStudentsData: Student[] = [
+  {
+    id: '1',
+    name: 'أحمد محمد علي',
+    nationalId: '29901011234567',
+    governorate: 'القاهرة',
+    college: 'كلية الهندسة',
+    level: 'الثالث',
+    dateOfBirth: '1999-01-01',
+    status: 'pending',
+    email: 'ahmed@example.com',
+    phone: '01012345678',
+    applicationDate: '2024-01-15',
+  },
+  {
+    id: '2',
+    name: 'محمود سعيد حسن',
+    nationalId: '29902022345678',
+    governorate: 'الجيزة',
+    college: 'كلية العلوم',
+    level: 'الثاني',
+    dateOfBirth: '1999-02-02',
+    status: 'accepted',
+    email: 'mahmoud@example.com',
+    phone: '01123456789',
+    applicationDate: '2024-01-10',
+  },
+  {
+    id: '3',
+    name: 'عمر خالد إبراهيم',
+    nationalId: '29903033456789',
+    governorate: 'الإسكندرية',
+    college: 'كلية الطب',
+    level: 'الرابع',
+    dateOfBirth: '1999-03-03',
+    status: 'accepted',
+    email: 'omar@example.com',
+    phone: '01234567890',
+    applicationDate: '2024-01-08',
+  },
+  {
+    id: '4',
+    name: 'يوسف أحمد عبدالله',
+    nationalId: '29904044567890',
+    governorate: 'المنيا',
+    college: 'كلية الحاسبات',
+    level: 'الأول',
+    dateOfBirth: '1999-04-04',
+    status: 'pending',
+    email: 'youssef@example.com',
+    phone: '01098765432',
+    applicationDate: '2024-01-20',
+  },
+  {
+    id: '5',
+    name: 'كريم محمد حسين',
+    nationalId: '29905055678901',
+    governorate: 'أسيوط',
+    college: 'كلية التجارة',
+    level: 'الثاني',
+    dateOfBirth: '1999-05-05',
+    status: 'rejected',
+    email: 'karim@example.com',
+    phone: '01187654321',
+    applicationDate: '2024-01-12',
+  },
+  {
+    id: '6',
+    name: 'علي حسن محمود',
+    nationalId: '29906066789012',
+    governorate: 'سوهاج',
+    college: 'كلية الآداب',
+    level: 'الثالث',
+    dateOfBirth: '1999-06-06',
+    status: 'pending',
+    email: 'ali@example.com',
+    phone: '01276543210',
+    applicationDate: '2024-01-18',
+  },
+  {
+    id: '7',
+    name: 'مصطفى عبدالرحمن',
+    nationalId: '29907077890123',
+    governorate: 'قنا',
+    college: 'كلية الهندسة',
+    level: 'الأول',
+    dateOfBirth: '1999-07-07',
+    status: 'accepted',
+    email: 'mostafa@example.com',
+    phone: '01365432109',
+    applicationDate: '2024-01-05',
+  },
+  {
+    id: '8',
+    name: 'حسام إبراهيم سالم',
+    nationalId: '29908088901234',
+    governorate: 'الأقصر',
+    college: 'كلية الزراعة',
+    level: 'الثاني',
+    dateOfBirth: '1999-08-08',
+    status: 'pending',
+    email: 'hossam@example.com',
+    phone: '01054321098',
+    applicationDate: '2024-01-22',
+  },
+];
+
+// Mock Application Windows
+export const mockWindowsData: ApplicationWindowDto[] = [
+  {
+    windowId: 1,
+    title: 'فترة التقدم للسكن - الفصل الدراسي الأول 2024',
+    description: 'فترة التقدم للسكن الجامعي للعام الدراسي 2024-2025',
+    startDate: '2024-01-01T00:00:00Z',
+    endDate: '2024-02-28T23:59:59Z',
+    createdAt: '2023-12-01T00:00:00Z',
+    status: 'completed',
+    userId: 1,
+  },
+  {
+    windowId: 2,
+    title: 'فترة التقدم للسكن - الفصل الدراسي الثاني 2024',
+    description: 'فترة التقدم للسكن الجامعي للفصل الدراسي الثاني',
+    startDate: '2024-06-01T00:00:00Z',
+    endDate: '2024-07-31T23:59:59Z',
+    createdAt: '2024-05-01T00:00:00Z',
+    status: 'upcoming',
+    userId: 1,
+  },
+  {
+    windowId: 3,
+    title: 'فترة التقدم للسكن - الصيف 2024',
+    description: 'فترة التقدم للسكن الصيفي',
+    startDate: '2024-08-01T00:00:00Z',
+    endDate: '2024-09-15T23:59:59Z',
+    createdAt: '2024-07-01T00:00:00Z',
+    status: 'upcoming',
+    userId: 1,
+  },
+];
+
+// Mock Buildings with Rooms
+export const mockBuildingsData: BuildingWithRooms[] = [
+  {
+    buildingId: 1,
+    name: 'مبنى الطلاب أ',
+    type: 'طلاب',
+    numberOfFloors: 5,
+    status: 'active',
+    rooms: [
+      { roomId: 1, roomNumber: '101', capacity: 4, currentOccupancy: 3, buildingId: 1, apartmentName: 'أ', status: 0, students: [] },
+      { roomId: 2, roomNumber: '102', capacity: 4, currentOccupancy: 4, buildingId: 1, apartmentName: 'أ', status: 0, students: [] },
+      { roomId: 3, roomNumber: '103', capacity: 4, currentOccupancy: 2, buildingId: 1, apartmentName: 'أ', status: 0, students: [] },
+      { roomId: 4, roomNumber: '201', capacity: 4, currentOccupancy: 1, buildingId: 1, apartmentName: 'ب', status: 0, students: [] },
+      { roomId: 5, roomNumber: '202', capacity: 4, currentOccupancy: 4, buildingId: 1, apartmentName: 'ب', status: 0, students: [] },
+    ],
+  },
+  {
+    buildingId: 2,
+    name: 'مبنى الطلاب ب',
+    type: 'طلاب',
+    numberOfFloors: 4,
+    status: 'active',
+    rooms: [
+      { roomId: 6, roomNumber: '101', capacity: 3, currentOccupancy: 2, buildingId: 2, apartmentName: 'أ', status: 0, students: [] },
+      { roomId: 7, roomNumber: '102', capacity: 3, currentOccupancy: 3, buildingId: 2, apartmentName: 'أ', status: 0, students: [] },
+      { roomId: 8, roomNumber: '201', capacity: 3, currentOccupancy: 0, buildingId: 2, apartmentName: 'ب', status: 0, students: [] },
+      { roomId: 9, roomNumber: '202', capacity: 3, currentOccupancy: 1, buildingId: 2, apartmentName: 'ب', status: 0, students: [] },
+    ],
+  },
+  {
+    buildingId: 3,
+    name: 'مبنى الطالبات',
+    type: 'طالبات',
+    numberOfFloors: 6,
+    status: 'active',
+    rooms: [
+      { roomId: 10, roomNumber: '101', capacity: 4, currentOccupancy: 4, buildingId: 3, apartmentName: 'أ', status: 0, students: [] },
+      { roomId: 11, roomNumber: '102', capacity: 4, currentOccupancy: 3, buildingId: 3, apartmentName: 'أ', status: 0, students: [] },
+      { roomId: 12, roomNumber: '103', capacity: 4, currentOccupancy: 2, buildingId: 3, apartmentName: 'أ', status: 0, students: [] },
+      { roomId: 13, roomNumber: '201', capacity: 4, currentOccupancy: 4, buildingId: 3, apartmentName: 'ب', status: 0, students: [] },
+      { roomId: 14, roomNumber: '202', capacity: 4, currentOccupancy: 1, buildingId: 3, apartmentName: 'ب', status: 0, students: [] },
+      { roomId: 15, roomNumber: '301', capacity: 4, currentOccupancy: 0, buildingId: 3, apartmentName: 'ج', status: 0, students: [] },
+    ],
+  },
+];
+
+// Mock Profile Data
+export const mockProfileData: StudentProfileDetailsDto = {
+  student: {
+    studentId: 1,
+    nationalId: '29901011234567',
+    fullName: 'أحمد محمد علي',
+    studentType: 0,
+    birthDate: '1999-01-01',
+    birthPlace: 'القاهرة',
+    gender: 'ذكر',
+    religion: 'مسلم',
+    governorate: 'القاهرة',
+    city: 'مدينة نصر',
+    address: 'شارع الحرية',
+    email: 'ahmed@example.com',
+    phone: '01012345678',
+    faculty: 'كلية الهندسة',
+    department: 'هندسة الحاسبات',
+    level: 'الثالث',
+    fatherContactId: 1,
+    guardianContactId: 2,
+    userId: 1,
+  },
+  academicEducation: {
+    studentId: 1,
+    currentGPA: 3.5,
+    lastYearGrade: 'جيد جداً',
+  },
+  secondaryEducation: {
+    studentId: 1,
+    secondaryStream: 'علمي رياضة',
+    totalScore: 380,
+    percentage: 95,
+    grade: 'امتياز',
+  },
+  fatherContact: {
+    contactId: 1,
+    fullName: 'محمد علي',
+    nationalId: '27001011234567',
+    relation: 'أب',
+    job: 'مهندس',
+    phoneNumber: '01198765432',
+    address: 'القاهرة',
+  },
+  guardianContact: {
+    contactId: 2,
+    fullName: 'محمد علي',
+    nationalId: '27001011234567',
+    relation: 'ولي أمر',
+    job: 'مهندس',
+    phoneNumber: '01198765432',
+    address: 'القاهرة',
+  },
+};
+
+// Mock Assignments
+export const mockAssignmentsData: StudentAssignmentDto[] = [
+  {
+    assignmentId: 1,
+    roomId: 1,
+    roomNumber: '101',
+    buildingId: 1,
+    buildingName: 'مبنى الطلاب أ',
+    assignedAt: '2024-01-20T10:30:00Z',
+  },
+];
+
+// Mock Admin Users
+export const mockAdminsData = [
+  {
+    id: 1,
+    userName: 'super_admin',
+    role: 'SuperAdmin',
+    createdAt: '2023-01-01T00:00:00Z',
+  },
+  {
+    id: 2,
+    userName: 'admin1',
+    role: 'Admin',
+    createdAt: '2023-06-15T00:00:00Z',
+  },
+  {
+    id: 3,
+    userName: 'admin2',
+    role: 'Admin',
+    createdAt: '2024-01-10T00:00:00Z',
+  },
+];

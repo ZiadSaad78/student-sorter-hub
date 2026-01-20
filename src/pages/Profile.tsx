@@ -1,58 +1,17 @@
-import { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Loader2, Building, Bed } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Building, Bed } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/student/Header';
-import { useAuth } from '@/hooks/useAuth';
-import { studentService } from '@/services/api';
-import { StudentProfileDetailsDto, StudentAssignmentDto } from '@/types/api';
-import { useToast } from '@/hooks/use-toast';
+import { mockProfileData, mockAssignmentsData } from '@/data/staticData';
 
 const Profile = () => {
-  const { user, role } = useAuth();
-  const [profile, setProfile] = useState<StudentProfileDetailsDto | null>(null);
-  const [assignments, setAssignments] = useState<StudentAssignmentDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      // Only fetch student profile if user is a student
-      if (role === 'Student' || role === 'student') {
-        const [profileRes, assignmentsRes] = await Promise.all([
-          studentService.getMyDetails(),
-          studentService.getMyAssignments(),
-        ]);
-
-        if (profileRes.error) {
-          toast({
-            title: 'خطأ في جلب البيانات',
-            description: profileRes.error,
-            variant: 'destructive',
-          });
-        } else if (profileRes.data) {
-          setProfile(profileRes.data);
-        }
-
-        if (assignmentsRes.data) {
-          setAssignments(assignmentsRes.data);
-        }
-      }
-      setLoading(false);
-    };
-
-    fetchProfile();
-  }, [role]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const profile = mockProfileData;
+  const assignments = mockAssignmentsData;
+  
+  // Demo mode - show as admin
+  const role: 'Admin' | 'SuperAdmin' | 'Student' = 'Admin';
 
   // Admin profile view
-  if (role === 'Admin' || role === 'admin' || role === 'SuperAdmin' || role === 'super_admin') {
+  if (role === 'Admin' || role === 'SuperAdmin') {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -72,12 +31,12 @@ const Profile = () => {
                 <div className="flex items-center gap-3">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">اسم المستخدم:</span>
-                  <span className="font-medium" dir="ltr">{user?.email || 'غير محدد'}</span>
+                  <span className="font-medium" dir="ltr">admin@demo.com</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">الدور:</span>
                   <span className="font-medium">
-                    {role === 'SuperAdmin' || role === 'super_admin' ? 'مسؤول رئيسي' : 'مسؤول'}
+                    {role === 'SuperAdmin' ? 'مسؤول رئيسي' : 'مسؤول'}
                   </span>
                 </div>
                 <div className="flex justify-between">
